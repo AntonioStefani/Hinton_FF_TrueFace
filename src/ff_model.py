@@ -17,7 +17,8 @@ class FF_model(torch.nn.Module):
         self.act_fn = ReLU_full_grad()
 
         # Initialize the model.
-        self.model = nn.ModuleList([nn.Linear(784, self.num_channels[0])])
+        initial_dim = self.opt.input.image_size*self.opt.input.image_size*self.opt.input.image_channels
+        self.model = nn.ModuleList([nn.Linear(initial_dim, self.num_channels[0])])
         for i in range(1, len(self.num_channels)):
             self.model.append(nn.Linear(self.num_channels[i - 1], self.num_channels[i]))
 
@@ -35,7 +36,7 @@ class FF_model(torch.nn.Module):
             self.num_channels[-i] for i in range(self.opt.model.num_layers - 1)
         )
         self.linear_classifier = nn.Sequential(
-            nn.Linear(channels_for_classification_loss, 10, bias=False)
+            nn.Linear(channels_for_classification_loss, self.opt.input.num_classes, bias=False)
         )
         self.classification_loss = nn.CrossEntropyLoss()
 

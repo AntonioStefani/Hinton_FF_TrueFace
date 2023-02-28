@@ -1,0 +1,153 @@
+diff --git a/config.yaml b/config.yaml
+index 7db0c1f..369b736 100644
+--- a/config.yaml
++++ b/config.yaml
+@@ -1,9 +1,11 @@
+ seed: 42
+-device: "cuda"  # cpu or cuda
++device: "cuda:0"  # cpu or cuda
+ 
+ input:
+-  path: datasets
++  path: /media/mmlab/Volume/truebees/Shared_Dataset
+   batch_size: 100
++  image_size: 256
++  image_channels: 3
+ 
+ 
+ model:
+@@ -17,14 +19,14 @@ model:
+ training:
+   epochs: 100
+ 
+-  learning_rate: 1e-3
++  learning_rate: 1e-5
+   weight_decay: 3e-4
+   momentum: 0.9
+ 
+   downstream_learning_rate: 1e-2
+   downstream_weight_decay: 3e-3
+ 
+-  val_idx: -1  # -1: validate only once training has finished; n: validate every n epochs.
++  val_idx: 5  # -1: validate only once training has finished; n: validate every n epochs.
+   final_test: False  # Set to true to evaluate performance on test-set.
+ 
+ 
+diff --git a/main.py b/main.py
+index c2ddc9e..9c424a9 100644
+--- a/main.py
++++ b/main.py
+@@ -1,6 +1,8 @@
+ import time
+ from collections import defaultdict
+ 
++import wandb
++
+ import hydra
+ import torch
+ from omegaconf import DictConfig
+@@ -9,6 +11,7 @@ from src import utils
+ 
+ 
+ def train(opt, model, optimizer):
++    wandb.init(config=opt)
+     start_time = time.time()
+     train_loader = utils.get_data(opt, "train")
+     num_steps_per_epoch = len(train_loader)
+@@ -28,9 +31,12 @@ def train(opt, model, optimizer):
+             optimizer.step()
+ 
+             train_results = utils.log_results(
+-                train_results, scalar_outputs, num_steps_per_epoch
++                train_results, scalar_outputs, num_steps_per_epoch            
+             )
+ 
++            wandb.log({"train/loss": scalar_outputs["Loss"]},step=epoch)
++            wandb.log({"train/loss": scalar_outputs["Loss"]},step=epoch)
++
+         utils.print_results("train", time.time() - start_time, train_results, epoch)
+         start_time = time.time()
+ 
+diff --git a/src/ff_model.py b/src/ff_model.py
+index 732e639..905aa95 100644
+--- a/src/ff_model.py
++++ b/src/ff_model.py
+@@ -17,7 +17,8 @@ class FF_model(torch.nn.Module):
+         self.act_fn = ReLU_full_grad()
+ 
+         # Initialize the model.
+-        self.model = nn.ModuleList([nn.Linear(784, self.num_channels[0])])
++        initial_dim = self.opt.input.image_size*self.opt.input.image_size*self.opt.input.image_channels
++        self.model = nn.ModuleList([nn.Linear(initial_dim, self.num_channels[0])])
+         for i in range(1, len(self.num_channels)):
+             self.model.append(nn.Linear(self.num_channels[i - 1], self.num_channels[i]))
+ 
+diff --git a/src/utils.py b/src/utils.py
+index 9da55be..9d98bb6 100644
+--- a/src/utils.py
++++ b/src/utils.py
+@@ -5,10 +5,11 @@ from datetime import timedelta
+ import numpy as np
+ import torch
+ import torchvision
++from torch.utils.data import DataLoader, random_split
+ from hydra.utils import get_original_cwd
+ from omegaconf import OmegaConf
+ 
+-from src import ff_mnist, ff_model
++from src import ff_mnist, ff_model, loader
+ 
+ 
+ def parse_args(opt):
+@@ -23,7 +24,7 @@ def parse_args(opt):
+ def get_model_and_optimizer(opt):
+     model = ff_model.FF_model(opt)
+     if "cuda" in opt.device:
+-        model = model.cuda()
++        model = model.to(device=opt.device)
+     print(model, "\n")
+ 
+     # Create optimizer with different hyper-parameters for the main model
+@@ -53,14 +54,15 @@ def get_model_and_optimizer(opt):
+ 
+ 
+ def get_data(opt, partition):
+-    dataset = ff_mnist.FF_MNIST(opt, partition)
++    dataset = loader.LoaderDataset(opt)
++    dset = get_DATASET_partition(dataset, partition)
+ 
+     # Improve reproducibility in dataloader.
+     g = torch.Generator()
+     g.manual_seed(opt.seed)
+ 
+     return torch.utils.data.DataLoader(
+-        dataset,
++        dset,
+         batch_size=opt.input.batch_size,
+         drop_last=True,
+         shuffle=True,
+@@ -77,6 +79,24 @@ def seed_worker(worker_id):
+     random.seed(worker_seed)
+ 
+ 
++def get_DATASET_partition(dataset, partition):
++    trainval_length = int(len(dataset)*0.8)
++    trainval_set, test_set = random_split(dataset, [trainval_length, len(dataset) - trainval_length])
++    train_length = int(len(trainval_set)*0.9)
++    train_set, validation_set = random_split(trainval_set, [train_length, len(trainval_set) - train_length])
++
++    if partition == "train":
++        dset = train_set
++    elif partition == "val":
++        dset = validation_set
++    elif partition == "test":
++        dset = test_set
++    else:
++        raise NotImplementedError
++
++    return dset
++
++
+ def get_MNIST_partition(opt, partition):
+     if partition in ["train", "val", "train_val"]:
+         mnist = torchvision.datasets.MNIST(

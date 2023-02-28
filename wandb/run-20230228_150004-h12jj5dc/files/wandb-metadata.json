@@ -1,0 +1,189 @@
+{
+    "os": "Linux-5.19.0-32-generic-x86_64-with-glibc2.35",
+    "python": "3.10.6",
+    "heartbeatAt": "2023-02-28T14:00:05.478275",
+    "startedAt": "2023-02-28T14:00:04.337536",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/home/antonioluigi.stefani/code/Hinton_FF_TrueFace/main.py",
+    "codePath": "main.py",
+    "git": {
+        "remote": "https://github.com/AntonioStefani/Hinton_FF_TrueFace.git",
+        "commit": "92c0c1c0565063dae0121734075013cab20da5c5"
+    },
+    "email": "antonioluigi.stefani@unitn.it",
+    "root": "/home/antonioluigi.stefani/code/Hinton_FF_TrueFace",
+    "host": "disi-locutus",
+    "username": "antonioluigi.stefani",
+    "executable": "/home/antonioluigi.stefani/virtualenv/bin/python3.10",
+    "cpu_count": 14,
+    "cpu_count_logical": 28,
+    "cpu_freq": {
+        "current": 3668.2710357142855,
+        "min": 1200.0,
+        "max": 4642.857142857143
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 3671.23,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.218,
+            "min": 1200.0,
+            "max": 4700.0
+        },
+        {
+            "current": 3600.002,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.215,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.214,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.2,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.234,
+            "min": 1200.0,
+            "max": 4800.0
+        },
+        {
+            "current": 3654.841,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3666.452,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.23,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3599.998,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.224,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.215,
+            "min": 1200.0,
+            "max": 4800.0
+        },
+        {
+            "current": 3671.221,
+            "min": 1200.0,
+            "max": 4700.0
+        },
+        {
+            "current": 3671.208,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.213,
+            "min": 1200.0,
+            "max": 4700.0
+        },
+        {
+            "current": 3599.999,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.217,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.217,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.288,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.211,
+            "min": 1200.0,
+            "max": 4800.0
+        },
+        {
+            "current": 3654.848,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3666.433,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.224,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3600.001,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.22,
+            "min": 1200.0,
+            "max": 4600.0
+        },
+        {
+            "current": 3671.218,
+            "min": 1200.0,
+            "max": 4800.0
+        },
+        {
+            "current": 3671.226,
+            "min": 1200.0,
+            "max": 4700.0
+        }
+    ],
+    "disk": {
+        "total": 1832.2072448730469,
+        "used": 89.08013153076172
+    },
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "gpu_count": 2,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 3090",
+            "memory_total": 25769803776
+        },
+        {
+            "name": "NVIDIA GeForce RTX 3090",
+            "memory_total": 25769803776
+        }
+    ],
+    "memory": {
+        "total": 251.39617538452148
+    }
+}

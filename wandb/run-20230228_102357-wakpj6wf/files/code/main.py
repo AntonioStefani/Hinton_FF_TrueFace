@@ -11,6 +11,7 @@ from src import utils
 
 
 def train(opt, model, optimizer):
+    wandb.init(config=opt)
     start_time = time.time()
     train_loader = utils.get_data(opt, "train")
     num_steps_per_epoch = len(train_loader)
@@ -33,9 +34,8 @@ def train(opt, model, optimizer):
                 train_results, scalar_outputs, num_steps_per_epoch            
             )
 
-            wandb.log({"train/loss": train_results["Loss"]},step=epoch)
-            wandb.log({"train/classification_loss": train_results["classification_loss"]},step=epoch)
-            wandb.log({"train/classification_accuracy": train_results["classification_accuracy"]},step=epoch)
+            wandb.log({"train/loss": scalar_outputs["Loss"]},step=epoch)
+            wandb.log({"train/loss": scalar_outputs["Loss"]},step=epoch)
 
         utils.print_results("train", time.time() - start_time, train_results, epoch)
         start_time = time.time()
@@ -67,10 +67,6 @@ def validate_or_test(opt, model, partition, epoch=None):
                 test_results, scalar_outputs, num_steps_per_epoch
             )
 
-            wandb.log({str(partition)+"/loss": test_results["Loss"]},step=epoch)
-            wandb.log({str(partition)+"/classification_loss": test_results["classification_loss"]},step=epoch)
-            wandb.log({str(partition)+"/classification_accuracy": test_results["classification_accuracy"]},step=epoch)
-
     utils.print_results(partition, time.time() - test_time, test_results, epoch=epoch)
     model.train()
 
@@ -78,7 +74,6 @@ def validate_or_test(opt, model, partition, epoch=None):
 @hydra.main(config_path=".", config_name="config", version_base=None)
 def my_main(opt: DictConfig) -> None:
     opt = utils.parse_args(opt)
-    wandb.init(config=opt)
     model, optimizer = utils.get_model_and_optimizer(opt)
     model = train(opt, model, optimizer)
     validate_or_test(opt, model, "val")

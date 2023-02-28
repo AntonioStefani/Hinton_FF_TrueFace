@@ -11,6 +11,7 @@ from src import utils
 
 
 def train(opt, model, optimizer):
+    wandb.init(config=opt)
     start_time = time.time()
     train_loader = utils.get_data(opt, "train")
     num_steps_per_epoch = len(train_loader)
@@ -78,7 +79,6 @@ def validate_or_test(opt, model, partition, epoch=None):
 @hydra.main(config_path=".", config_name="config", version_base=None)
 def my_main(opt: DictConfig) -> None:
     opt = utils.parse_args(opt)
-    wandb.init(config=opt)
     model, optimizer = utils.get_model_and_optimizer(opt)
     model = train(opt, model, optimizer)
     validate_or_test(opt, model, "val")

@@ -5,10 +5,11 @@ from datetime import timedelta
 import numpy as np
 import torch
 import torchvision
+from torch.utils.data import DataLoader, random_split
 from hydra.utils import get_original_cwd
 from omegaconf import OmegaConf
 
-from src import ff_mnist, ff_model
+from src import ff_mnist, ff_model, loader
 
 
 def parse_args(opt):
@@ -23,7 +24,7 @@ def parse_args(opt):
 def get_model_and_optimizer(opt):
     model = ff_model.FF_model(opt)
     if "cuda" in opt.device:
-        model = model.cuda()
+        model = model.to(device=opt.device)
     print(model, "\n")
 
     # Create optimizer with different hyper-parameters for the main model
@@ -53,14 +54,15 @@ def get_model_and_optimizer(opt):
 
 
 def get_data(opt, partition):
-    dataset = ff_mnist.FF_MNIST(opt, partition)
+    dataset = loader.LoaderDataset(opt)
+    dset = get_DATASET_partition(dataset, partition)
 
     # Improve reproducibility in dataloader.
     g = torch.Generator()
     g.manual_seed(opt.seed)
 
     return torch.utils.data.DataLoader(
-        dataset,
+        dset,
         batch_size=opt.input.batch_size,
         drop_last=True,
         shuffle=True,
@@ -75,6 +77,24 @@ def seed_worker(worker_id):
     worker_seed = torch.initial_seed() % 2 ** 32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
+
+
+def get_DATASET_partition(dataset, partition):
+    trainval_length = int(len(dataset)*0.8)
+    trainval_set, test_set = random_split(dataset, [trainval_length, len(dataset) - trainval_length])
+    train_length = int(len(trainval_set)*0.9)
+    train_set, validation_set = random_split(trainval_set, [train_length, len(trainval_set) - train_length])
+
+    if partition == "train":
+        dset = train_set
+    elif partition == "val":
+        dset = validation_set
+    elif partition == "test":
+        dset = test_set
+    else:
+        raise NotImplementedError
+
+    return dset
 
 
 def get_MNIST_partition(opt, partition):
@@ -109,16 +129,16 @@ def get_MNIST_partition(opt, partition):
     return mnist
 
 
-def dict_to_cuda(dict):
+def dict_to_cuda(opt, dict):
     for key, value in dict.items():
-        dict[key] = value.cuda(non_blocking=True)
+        dict[key] = value.to(device=opt.device, non_blocking=True)
     return dict
 
 
 def preprocess_inputs(opt, inputs, labels):
     if "cuda" in opt.device:
-        inputs = dict_to_cuda(inputs)
-        labels = dict_to_cuda(labels)
+        inputs = dict_to_cuda(opt, inputs)
+        labels = dict_to_cuda(opt, labels)
     return inputs, labels
 
 
