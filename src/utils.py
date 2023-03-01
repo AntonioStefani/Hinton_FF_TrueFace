@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, random_split
 from hydra.utils import get_original_cwd
 from omegaconf import OmegaConf
 
-from src import ff_mnist, ff_model, loader
+from src import ff_mnist, ff_model, loader, ff_vit_model
 
 
 def parse_args(opt):
@@ -22,7 +22,8 @@ def parse_args(opt):
 
 
 def get_model_and_optimizer(opt):
-    model = ff_model.FF_model(opt)
+    # model = ff_model.FF_model(opt)
+    model = ff_vit_model.FF_ViT_model(opt)
     if "cuda" in opt.device:
         model = model.to(device=opt.device)
     print(model, "\n")
@@ -54,8 +55,10 @@ def get_model_and_optimizer(opt):
 
 
 def get_data(opt, partition):
-    dataset = loader.LoaderDataset(opt)
-    dset = get_DATASET_partition(dataset, partition)
+    # dataset = loader.LoaderDataset(opt)
+    # dset = get_DATASET_partition(dataset, partition)
+    
+    dset = ff_mnist.FF_MNIST(opt, partition)
 
     # Improve reproducibility in dataloader.
     g = torch.Generator()

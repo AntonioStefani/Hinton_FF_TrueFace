@@ -17,7 +17,7 @@ class FF_model(torch.nn.Module):
         self.act_fn = ReLU_full_grad()
 
         # Initialize the model.
-        initial_dim = self.opt.input.image_size*self.opt.input.image_size*self.opt.input.image_channels
+        initial_dim = self.opt.input.image_size*self.opt.input.image_size*self.opt.input.image_channels + self.opt.input.num_classes
         self.model = nn.ModuleList([nn.Linear(initial_dim, self.num_channels[0])])
         for i in range(1, len(self.num_channels)):
             self.model.append(nn.Linear(self.num_channels[i - 1], self.num_channels[i]))

@@ -32,7 +32,10 @@ class FF_MNIST(torch.utils.data.Dataset):
             torch.tensor(class_label), num_classes=self.num_classes
         )
         pos_sample = sample.clone()
-        pos_sample[:, 0, : self.num_classes] = one_hot_label
+        # pos_sample[:, 0, : self.num_classes] = one_hot_label
+        
+        pos_sample = pos_sample.reshape(pos_sample.shape[0], -1)
+        pos_sample = torch.concatenate((pos_sample, torch.unsqueeze(one_hot_label, 0)), -1)
         return pos_sample
 
     def _get_neg_sample(self, sample, class_label):
@@ -44,11 +47,17 @@ class FF_MNIST(torch.utils.data.Dataset):
             torch.tensor(wrong_class_label), num_classes=self.num_classes
         )
         neg_sample = sample.clone()
-        neg_sample[:, 0, : self.num_classes] = one_hot_label
+        # neg_sample[:, 0, : self.num_classes] = one_hot_label
+
+        neg_sample = neg_sample.reshape(neg_sample.shape[0], -1)
+        neg_sample = torch.concatenate((neg_sample, torch.unsqueeze(one_hot_label, 0)), -1)
         return neg_sample
 
     def _get_neutral_sample(self, z):
-        z[:, 0, : self.num_classes] = self.uniform_label
+        # z[:, 0, : self.num_classes] = self.uniform_label
+
+        z = z.reshape(z.shape[0], -1)
+        z = torch.concatenate((z, torch.unsqueeze(self.uniform_label, 0)), -1)
         return z
 
     def _generate_sample(self, index):
