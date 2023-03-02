@@ -55,10 +55,10 @@ def get_model_and_optimizer(opt):
 
 
 def get_data(opt, partition):
-    # dataset = loader.LoaderDataset(opt)
-    # dset = get_DATASET_partition(dataset, partition)
+    dataset = loader.LoaderDataset(opt)
+    dset = get_DATASET_partition(dataset, partition)
     
-    dset = ff_mnist.FF_MNIST(opt, partition)
+    # dset = ff_mnist.FF_MNIST(opt, partition)
 
     # Improve reproducibility in dataloader.
     g = torch.Generator()

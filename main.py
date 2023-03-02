@@ -2,6 +2,7 @@ import time
 from collections import defaultdict
 
 # import wandb
+from tqdm import tqdm
 
 import hydra
 import torch
@@ -18,24 +19,27 @@ def train(opt, model, optimizer):
     for epoch in range(opt.training.epochs):
         train_results = defaultdict(float)
         optimizer = utils.update_learning_rate(optimizer, opt, epoch)
+        
+        with tqdm(train_loader, unit="batch") as tepoch:
+            tepoch.set_description(f"Epoch {epoch}")
+            for batch_idx, (inputs, labels) in enumerate(tepoch):
+                inputs, labels = utils.preprocess_inputs(opt, inputs, labels)
 
-        for inputs, labels in train_loader:
-            inputs, labels = utils.preprocess_inputs(opt, inputs, labels)
+                optimizer.zero_grad()
 
-            optimizer.zero_grad()
+                scalar_outputs = model(inputs, labels)
+                scalar_outputs["Loss"].backward()
 
-            scalar_outputs = model(inputs, labels)
-            scalar_outputs["Loss"].backward()
+                optimizer.step()
 
-            optimizer.step()
+                train_results = utils.log_results(
+                    train_results, scalar_outputs, num_steps_per_epoch            
+                )
 
-            train_results = utils.log_results(
-                train_results, scalar_outputs, num_steps_per_epoch            
-            )
-
-            # wandb.log({"train/loss": train_results["Loss"]},step=epoch)
-            # wandb.log({"train/classification_loss": train_results["classification_loss"]},step=epoch)
-            # wandb.log({"train/classification_accuracy": train_results["classification_accuracy"]},step=epoch)
+                # wandb.log({"train/loss": train_results["Loss"]},step=epoch)
+                # wandb.log({"train/classification_loss": train_results["classification_loss"]},step=epoch)
+                # wandb.log({"train/classification_accuracy": train_results["classification_accuracy"]},step=epoch)
+                tepoch.set_postfix(loss=train_results["Loss"], closs=train_results["classification_loss"], acc=train_results["classification_accuracy"])
 
         utils.print_results("train", time.time() - start_time, train_results, epoch)
         start_time = time.time()
@@ -75,7 +79,7 @@ def validate_or_test(opt, model, partition, epoch=None):
     model.train()
 
 
-@hydra.main(config_path=".", config_name="config_mnist", version_base=None)
+@hydra.main(config_path=".", config_name="config_face", version_base=None)
 def my_main(opt: DictConfig) -> None:
     opt = utils.parse_args(opt)
     # wandb.init(config=opt)

@@ -1,21 +1,21 @@
 seed: 42
-device: cuda
+device: cuda:0
 input:
-  path: /media/mmlab/Volume/truebees/Shared_Dataset
+  path: /media/mmlab/Volume/truebees/TrueFace/TrueFace_PostSocial
   batch_size: 100
-  image_size: 28
-  image_channels: 1
-  num_classes: 10
+  image_size: 720
+  image_channels: 3
+  num_classes: 2
 transformer:
-  hidden_dim: 64
-  patch_size: 7
+  hidden_dim: 32
+  patch_size: 180
   heads: 8
   dim_head: 32
-  mlp_dim: 128
+  mlp_dim: 100
 model:
   peer_normalization: 0.03
   momentum: 0.9
-  hidden_dim: 1024
+  hidden_dim: 512
   num_layers: 3
 training:
   epochs: 100

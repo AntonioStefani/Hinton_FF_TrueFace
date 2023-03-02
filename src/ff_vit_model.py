@@ -210,7 +210,6 @@ class FF_ViT_model(torch.nn.Module):
         posneg_labels[: self.opt.input.batch_size] = 1
 
         z = z.reshape(z.shape[0], -1)
-        z = self._layer_norm(z)
         
         x = z[:,:-self.opt.input.num_classes]
         y = z[:,-self.opt.input.num_classes:]
@@ -222,6 +221,8 @@ class FF_ViT_model(torch.nn.Module):
 
         z += self.pos_embedding
         z = self.dropout(z)
+        
+        z = self._layer_norm(z)
 
         for idx, layer in enumerate(self.model):
 
