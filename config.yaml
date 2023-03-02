@@ -3,8 +3,8 @@ device: "cuda:1"  # cpu or cuda
 
 input:
   path: /media/mmlab/Volume/truebees/Shared_Dataset
-  batch_size: 100
-  image_size: 256
+  batch_size: 128
+  image_size: 480
   image_channels: 3
   num_classes: 2
 

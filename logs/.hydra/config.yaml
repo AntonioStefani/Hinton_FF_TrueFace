@@ -1,9 +1,9 @@
 seed: 42
 device: cuda:0
 input:
-  path: /media/mmlab/Volume/truebees/TrueFace/TrueFace_PostSocial
-  batch_size: 100
-  image_size: 720
+  path: /media/mmlab/Volume/truebees/TrueFace/TrueFace_PostSocial/
+  batch_size: 128
+  image_size: 480
   image_channels: 3
   num_classes: 2
 transformer:
@@ -15,11 +15,11 @@ transformer:
 model:
   peer_normalization: 0.03
   momentum: 0.9
-  hidden_dim: 512
+  hidden_dim: 1000
   num_layers: 3
 training:
-  epochs: 100
-  learning_rate: 0.001
+  epochs: 200
+  learning_rate: 0.0001
   weight_decay: 0.0003
   momentum: 0.9
   downstream_learning_rate: 0.01
