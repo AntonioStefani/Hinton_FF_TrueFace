@@ -36,6 +36,8 @@ def train(opt, model, optimizer):
             wandb.log({"train/loss": train_results["Loss"]},step=epoch)
             wandb.log({"train/classification_loss": train_results["classification_loss"]},step=epoch)
             wandb.log({"train/classification_accuracy": train_results["classification_accuracy"]},step=epoch)
+            
+            torch.save(model.state_dict(), "checkpoint/weights_FB_480_OriginalCode.pth")
 
         utils.print_results("train", time.time() - start_time, train_results, epoch)
         start_time = time.time()
