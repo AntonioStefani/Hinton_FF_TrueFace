@@ -2,6 +2,7 @@ import time
 from collections import defaultdict
 
 import wandb
+from tqdm import tqdm
 
 import hydra
 import torch
@@ -19,25 +20,28 @@ def train(opt, model, optimizer):
         train_results = defaultdict(float)
         optimizer = utils.update_learning_rate(optimizer, opt, epoch)
 
-        for inputs, labels in train_loader:
-            inputs, labels = utils.preprocess_inputs(opt, inputs, labels)
+        with tqdm(train_loader, unit="batch") as tepoch:
+            tepoch.set_description(f"Epoch {epoch}")
+            for batch_idx, (inputs, labels) in enumerate(tepoch):
+                inputs, labels = utils.preprocess_inputs(opt, inputs, labels)
 
-            optimizer.zero_grad()
+                optimizer.zero_grad()
 
-            scalar_outputs = model(inputs, labels)
-            scalar_outputs["Loss"].backward()
+                scalar_outputs = model(inputs, labels)
+                scalar_outputs["Loss"].backward()
 
-            optimizer.step()
+                optimizer.step()
 
-            train_results = utils.log_results(
-                train_results, scalar_outputs, num_steps_per_epoch            
-            )
+                train_results = utils.log_results(
+                    train_results, scalar_outputs, num_steps_per_epoch            
+                )
 
-            wandb.log({"train/loss": train_results["Loss"]},step=epoch)
-            wandb.log({"train/classification_loss": train_results["classification_loss"]},step=epoch)
-            wandb.log({"train/classification_accuracy": train_results["classification_accuracy"]},step=epoch)
+                wandb.log({"train/loss": train_results["Loss"]},step=epoch)
+                wandb.log({"train/classification_loss": train_results["classification_loss"]},step=epoch)
+                wandb.log({"train/classification_accuracy": train_results["classification_accuracy"]},step=epoch)
+                tepoch.set_postfix(loss=train_results["Loss"], closs=train_results["classification_loss"], acc=train_results["classification_accuracy"])
             
-            torch.save(model.state_dict(), "checkpoint/weights_FB_480_OriginalCode.pth")
+                torch.save(model.state_dict(), "checkpoint/weights_FB_480_OriginalCode.pth")
 
         utils.print_results("train", time.time() - start_time, train_results, epoch)
         start_time = time.time()
