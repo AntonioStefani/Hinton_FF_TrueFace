@@ -22,8 +22,8 @@ def parse_args(opt):
 
 
 def get_model_and_optimizer(opt):
-    model = ff_model.FF_model(opt)
-    # model = ff_vit_model.FF_ViT_model(opt)
+    # model = ff_model.FF_model(opt)
+    model = ff_vit_model.FF_ViT_model(opt)
     if "cuda" in opt.device:
         model = model.to(device=opt.device)
     print(model, "\n")

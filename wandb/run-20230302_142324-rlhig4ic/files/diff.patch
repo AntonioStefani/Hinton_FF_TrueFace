@@ -1,0 +1,94 @@
+diff --git a/config.yaml b/config.yaml
+index a625423..6ffc1f1 100644
+--- a/config.yaml
++++ b/config.yaml
+@@ -2,9 +2,9 @@ seed: 42
+ device: "cuda:1"  # cpu or cuda
+ 
+ input:
+-  path: /media/mmlab/Volume/truebees/Shared_Dataset
+-  batch_size: 100
+-  image_size: 256
++  path: /media/mmlab/Volume/truebees/TrueFace/TrueFace_PostSocial/
++  batch_size: 128
++  image_size: 480
+   image_channels: 3
+   num_classes: 2
+ 
+@@ -18,9 +18,9 @@ model:
+ 
+ 
+ training:
+-  epochs: 100
++  epochs: 200
+ 
+-  learning_rate: 1e-5
++  learning_rate: 1e-4
+   weight_decay: 3e-4
+   momentum: 0.9
+ 
+diff --git a/logs/.hydra/config.yaml b/logs/.hydra/config.yaml
+index 0abf152..f5148ae 100644
+--- a/logs/.hydra/config.yaml
++++ b/logs/.hydra/config.yaml
+@@ -1,19 +1,19 @@
+ seed: 42
+ device: cuda:1
+ input:
+-  path: /media/mmlab/Volume/truebees/Shared_Dataset
+-  batch_size: 2
+-  image_size: 720
++  path: /media/mmlab/Volume/truebees/TrueFace/TrueFace_PostSocial/
++  batch_size: 128
++  image_size: 480
+   image_channels: 3
+   num_classes: 2
+ model:
+   peer_normalization: 0.03
+   momentum: 0.9
+-  hidden_dim: 500
++  hidden_dim: 1000
+   num_layers: 3
+ training:
+-  epochs: 100
+-  learning_rate: 1.0e-05
++  epochs: 200
++  learning_rate: 0.0001
+   weight_decay: 0.0003
+   momentum: 0.9
+   downstream_learning_rate: 0.01
+diff --git a/main.py b/main.py
+index 8e33e4e..b790c7f 100644
+--- a/main.py
++++ b/main.py
+@@ -36,6 +36,8 @@ def train(opt, model, optimizer):
+             wandb.log({"train/loss": train_results["Loss"]},step=epoch)
+             wandb.log({"train/classification_loss": train_results["classification_loss"]},step=epoch)
+             wandb.log({"train/classification_accuracy": train_results["classification_accuracy"]},step=epoch)
++            
++            torch.save(model.state_dict(), "checkpoint/weights_FB_480_OriginalCode.pth")
+ 
+         utils.print_results("train", time.time() - start_time, train_results, epoch)
+         start_time = time.time()
+diff --git a/src/utils.py b/src/utils.py
+index 58cdb84..8530bb7 100644
+--- a/src/utils.py
++++ b/src/utils.py
+@@ -57,6 +57,8 @@ def get_data(opt, partition):
+     dataset = loader.LoaderDataset(opt)
+     dset = get_DATASET_partition(dataset, partition)
+ 
++    # dset = ff_mnist.FF_MNIST(opt, partition)
++
+     # Improve reproducibility in dataloader.
+     g = torch.Generator()
+     g.manual_seed(opt.seed)
+diff --git a/wandb/latest-run b/wandb/latest-run
+index a749478..6ec34e9 120000
+--- a/wandb/latest-run
++++ b/wandb/latest-run
+@@ -1 +1 @@
+-run-20230228_150922-gsa6dqu7
+\ No newline at end of file
++run-20230302_142324-rlhig4ic
+\ No newline at end of file

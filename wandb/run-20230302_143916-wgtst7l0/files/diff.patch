@@ -1,0 +1,171 @@
+diff --git a/.gitignore b/.gitignore
+index 64137e3..fc02ed0 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -131,4 +131,9 @@ dmypy.json
+ 
+ .DS_Store
+ */.DS_Store
+-.idea
+\ No newline at end of file
++.idea
++
++
++checkpoint/
++logs/
++wandb/
+\ No newline at end of file
+diff --git a/config.yaml b/config.yaml
+index a625423..b3d3b0e 100644
+--- a/config.yaml
++++ b/config.yaml
+@@ -3,8 +3,8 @@ device: "cuda:1"  # cpu or cuda
+ 
+ input:
+   path: /media/mmlab/Volume/truebees/Shared_Dataset
+-  batch_size: 100
+-  image_size: 256
++  batch_size: 128
++  image_size: 480
+   image_channels: 3
+   num_classes: 2
+ 
+diff --git a/config_face.yaml b/config_face.yaml
+index 271828e..473f212 100644
+--- a/config_face.yaml
++++ b/config_face.yaml
+@@ -2,9 +2,9 @@ seed: 42
+ device: "cuda:0"  # cpu or cuda
+ 
+ input:
+-  path: /media/mmlab/Volume/truebees/TrueFace/TrueFace_PostSocial
+-  batch_size: 100
+-  image_size: 720
++  path: /media/mmlab/Volume/truebees/TrueFace/TrueFace_PostSocial/
++  batch_size: 128
++  image_size: 480
+   image_channels: 3
+   num_classes: 2
+ 
+@@ -19,14 +19,14 @@ model:
+   peer_normalization: 0.03
+   momentum: 0.9  # Momentum to use for the running mean in peer normalization loss.
+ 
+-  hidden_dim: 512  # Classification layer dimension
++  hidden_dim: 1000  # Classification layer dimension
+   num_layers: 3
+ 
+ 
+ training:
+-  epochs: 100
++  epochs: 200
+ 
+-  learning_rate: 1e-3
++  learning_rate: 1e-4
+   weight_decay: 3e-4
+   momentum: 0.9
+ 
+diff --git a/logs/.hydra/config.yaml b/logs/.hydra/config.yaml
+index 20c4d7a..ec5062a 100644
+--- a/logs/.hydra/config.yaml
++++ b/logs/.hydra/config.yaml
+@@ -1,9 +1,9 @@
+ seed: 42
+ device: cuda:0
+ input:
+-  path: /media/mmlab/Volume/truebees/TrueFace/TrueFace_PostSocial
+-  batch_size: 100
+-  image_size: 720
++  path: /media/mmlab/Volume/truebees/TrueFace/TrueFace_PostSocial/
++  batch_size: 128
++  image_size: 480
+   image_channels: 3
+   num_classes: 2
+ transformer:
+@@ -15,11 +15,11 @@ transformer:
+ model:
+   peer_normalization: 0.03
+   momentum: 0.9
+-  hidden_dim: 512
++  hidden_dim: 1000
+   num_layers: 3
+ training:
+-  epochs: 100
+-  learning_rate: 0.001
++  epochs: 200
++  learning_rate: 0.0001
+   weight_decay: 0.0003
+   momentum: 0.9
+   downstream_learning_rate: 0.01
+diff --git a/main.py b/main.py
+index ba915d1..08a736c 100644
+--- a/main.py
++++ b/main.py
+@@ -1,7 +1,7 @@
+ import time
+ from collections import defaultdict
+ 
+-# import wandb
++import wandb
+ from tqdm import tqdm
+ 
+ import hydra
+@@ -36,9 +36,9 @@ def train(opt, model, optimizer):
+                     train_results, scalar_outputs, num_steps_per_epoch            
+                 )
+ 
+-                # wandb.log({"train/loss": train_results["Loss"]},step=epoch)
+-                # wandb.log({"train/classification_loss": train_results["classification_loss"]},step=epoch)
+-                # wandb.log({"train/classification_accuracy": train_results["classification_accuracy"]},step=epoch)
++                wandb.log({"train/loss": train_results["Loss"]},step=epoch)
++                wandb.log({"train/classification_loss": train_results["classification_loss"]},step=epoch)
++                wandb.log({"train/classification_accuracy": train_results["classification_accuracy"]},step=epoch)
+                 tepoch.set_postfix(loss=train_results["Loss"], closs=train_results["classification_loss"], acc=train_results["classification_accuracy"])
+ 
+         utils.print_results("train", time.time() - start_time, train_results, epoch)
+@@ -71,9 +71,9 @@ def validate_or_test(opt, model, partition, epoch=None):
+                 test_results, scalar_outputs, num_steps_per_epoch
+             )
+ 
+-            # wandb.log({str(partition)+"/loss": test_results["Loss"]},step=epoch)
+-            # wandb.log({str(partition)+"/classification_loss": test_results["classification_loss"]},step=epoch)
+-            # wandb.log({str(partition)+"/classification_accuracy": test_results["classification_accuracy"]},step=epoch)
++            wandb.log({str(partition)+"/loss": test_results["Loss"]},step=epoch)
++            wandb.log({str(partition)+"/classification_loss": test_results["classification_loss"]},step=epoch)
++            wandb.log({str(partition)+"/classification_accuracy": test_results["classification_accuracy"]},step=epoch)
+ 
+     utils.print_results(partition, time.time() - test_time, test_results, epoch=epoch)
+     model.train()
+@@ -82,7 +82,7 @@ def validate_or_test(opt, model, partition, epoch=None):
+ @hydra.main(config_path=".", config_name="config_face", version_base=None)
+ def my_main(opt: DictConfig) -> None:
+     opt = utils.parse_args(opt)
+-    # wandb.init(config=opt)
++    wandb.init(config=opt)
+     model, optimizer = utils.get_model_and_optimizer(opt)
+     model = train(opt, model, optimizer)
+     validate_or_test(opt, model, "val")
+diff --git a/src/utils.py b/src/utils.py
+index 975f852..ffb6b6e 100644
+--- a/src/utils.py
++++ b/src/utils.py
+@@ -22,8 +22,8 @@ def parse_args(opt):
+ 
+ 
+ def get_model_and_optimizer(opt):
+-    # model = ff_model.FF_model(opt)
+-    model = ff_vit_model.FF_ViT_model(opt)
++    model = ff_model.FF_model(opt)
++    # model = ff_vit_model.FF_ViT_model(opt)
+     if "cuda" in opt.device:
+         model = model.to(device=opt.device)
+     print(model, "\n")
+diff --git a/wandb/latest-run b/wandb/latest-run
+index a749478..190f90e 120000
+--- a/wandb/latest-run
++++ b/wandb/latest-run
+@@ -1 +1 @@
+-run-20230228_150922-gsa6dqu7
+\ No newline at end of file
++run-20230302_143916-wgtst7l0
+\ No newline at end of file

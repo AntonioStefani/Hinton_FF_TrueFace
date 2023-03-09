@@ -1,0 +1,50 @@
+diff --git a/config.yaml b/config.yaml
+index 09a8e3a..6ffc1f1 100644
+--- a/config.yaml
++++ b/config.yaml
+@@ -1,5 +1,5 @@
+ seed: 42
+-device: "cuda:0"  # cpu or cuda
++device: "cuda:1"  # cpu or cuda
+ 
+ input:
+   path: /media/mmlab/Volume/truebees/TrueFace/TrueFace_PostSocial/
+diff --git a/logs/.hydra/config.yaml b/logs/.hydra/config.yaml
+index 0abf152..f5148ae 100644
+--- a/logs/.hydra/config.yaml
++++ b/logs/.hydra/config.yaml
+@@ -1,19 +1,19 @@
+ seed: 42
+ device: cuda:1
+ input:
+-  path: /media/mmlab/Volume/truebees/Shared_Dataset
+-  batch_size: 2
+-  image_size: 720
++  path: /media/mmlab/Volume/truebees/TrueFace/TrueFace_PostSocial/
++  batch_size: 128
++  image_size: 480
+   image_channels: 3
+   num_classes: 2
+ model:
+   peer_normalization: 0.03
+   momentum: 0.9
+-  hidden_dim: 500
++  hidden_dim: 1000
+   num_layers: 3
+ training:
+-  epochs: 100
+-  learning_rate: 1.0e-05
++  epochs: 200
++  learning_rate: 0.0001
+   weight_decay: 0.0003
+   momentum: 0.9
+   downstream_learning_rate: 0.01
+diff --git a/wandb/latest-run b/wandb/latest-run
+index a749478..7830eb1 120000
+--- a/wandb/latest-run
++++ b/wandb/latest-run
+@@ -1 +1 @@
+-run-20230228_150922-gsa6dqu7
+\ No newline at end of file
++run-20230302_145422-h523cw9c
+\ No newline at end of file
