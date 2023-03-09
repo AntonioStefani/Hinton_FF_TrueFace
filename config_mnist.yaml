@@ -10,8 +10,8 @@ input:
 
 transformer:
   hidden_dim: 64
-  patch_size: 7
-  heads: 8
+  patch_size: 14
+  heads: 3
   dim_head: 32
   mlp_dim: 128
 

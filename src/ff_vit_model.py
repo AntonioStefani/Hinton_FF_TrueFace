@@ -83,7 +83,7 @@ class TransformerBlock(nn.Module):
 
         self.x = x
 
-        return x.detach() 
+        return x
 
 class FF_ViT_model(torch.nn.Module):
     """The ViT model trained with Forward-Forward (FF)."""
@@ -96,11 +96,6 @@ class FF_ViT_model(torch.nn.Module):
         self.act_fn = ReLU_full_grad()
 
         # # Initialize the model.
-        # initial_dim = self.opt.input.image_size*self.opt.input.image_size*self.opt.input.image_channels + self.opt.input.num_classes
-        # self.model = nn.ModuleList([nn.Linear(initial_dim, self.num_channels[0])])
-        # for i in range(1, len(self.num_channels)):
-        #     self.model.append(nn.Linear(self.num_channels[i - 1], self.num_channels[i]))
-
         image_height, image_width = pair(opt.input.image_size)
         patch_height, patch_width = pair(opt.transformer.patch_size)
 
@@ -125,11 +120,6 @@ class FF_ViT_model(torch.nn.Module):
 
         self.pos_embedding = nn.Parameter(torch.randn(1, self.num_patches, dim))
         self.dropout = nn.Dropout(emb_dropout)
-
-        # blocks = []
-        # blocks.append(TransformerBlock(dims[0], heads[0], dim_head[0], mlp_dim[0]))
-        # for i in range(len(dims[1:])):
-        #     blocks.append(TransformerBlock(dims[i], heads[i], dim_head[i], mlp_dim[i]))
 
         self.model = nn.ModuleList([TransformerBlock(dims[0], heads[0], dim_head[0], mlp_dim[0])])
         for i in range(1, len(self.num_channels)):
