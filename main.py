@@ -88,7 +88,7 @@ def my_main(opt: DictConfig) -> None:
         wandb.init(config=opt, project=opt.wandb.project, group=opt.wandb.group)
     model, optimizer = utils.get_model_and_optimizer(opt)
     model = train(opt, model, optimizer)
-    validate_or_test(opt, model, "val")
+    validate_or_test(opt, model, "val", epoch=opt.training.epochs)
 
     if opt.training.final_test:
         validate_or_test(opt, model, "test")

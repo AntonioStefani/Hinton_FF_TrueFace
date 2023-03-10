@@ -118,7 +118,7 @@ hydra:
     override_dirname: ''
     id: ???
     num: ???
-    config_name: config_mnist_vit
+    config_name: config_mnist_mlp
     env_set: {}
     env_copy: []
     config:
