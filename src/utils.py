@@ -33,7 +33,7 @@ def get_model_and_optimizer(opt):
     main_model_params = [
         p
         for p in model.parameters()
-        if all(p is not x for x in model.classification_loss.parameters())
+        if all(p is not x for x in model.linear_classifier.parameters())
     ]
     optimizer = torch.optim.SGD(
         [
@@ -44,7 +44,7 @@ def get_model_and_optimizer(opt):
                 "momentum": opt.training.momentum,
             },
             {
-                "params": model.classification_loss.parameters(),
+                "params": model.linear_classifier.parameters(),
                 "lr": opt.training.downstream_learning_rate,
                 "weight_decay": opt.training.downstream_weight_decay,
                 "momentum": opt.training.momentum,
@@ -55,10 +55,9 @@ def get_model_and_optimizer(opt):
 
 
 def get_data(opt, partition):
-    # dataset = loader.LoaderDataset(opt)
-    # dset = get_DATASET_partition(dataset, partition)
+    dset = get_DATASET_partition(opt, partition)
     
-    dset = ff_mnist.FF_MNIST(opt, partition)
+    # dset = ff_mnist.FF_MNIST(opt, partition)
 
     # Improve reproducibility in dataloader.
     g = torch.Generator()
@@ -82,18 +81,19 @@ def seed_worker(worker_id):
     random.seed(worker_seed)
 
 
-def get_DATASET_partition(dataset, partition):
-    trainval_length = int(len(dataset)*0.8)
-    trainval_set, test_set = random_split(dataset, [trainval_length, len(dataset) - trainval_length])
-    train_length = int(len(trainval_set)*0.9)
-    train_set, validation_set = random_split(trainval_set, [train_length, len(trainval_set) - train_length])
+def get_DATASET_partition(opt, partition):
+    dataset = loader.LoaderDataset(opt, partition)
 
-    if partition == "train":
-        dset = train_set
-    elif partition == "val":
-        dset = validation_set
+    if partition in ["train", "val"]:
+        train_length = int(len(dataset)*0.9)
+        train_set, validation_set = random_split(dataset, [train_length, len(dataset) - train_length])
+
+        if partition == "train":
+            dset = train_set
+        elif partition == "val":
+            dset = validation_set
     elif partition == "test":
-        dset = test_set
+        dset = dataset
     else:
         raise NotImplementedError
 

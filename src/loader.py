@@ -8,7 +8,7 @@ import numpy as np
 from src import utils
 
 class LoaderDataset(datasets.DatasetFolder):
-    def __init__(self, opt, num_classes=2):
+    def __init__(self, opt, phase="test", num_classes=2):
         self.opt = opt
         self.num_classes = num_classes
         self.uniform_label = torch.ones(self.num_classes) / self.num_classes
@@ -20,7 +20,19 @@ class LoaderDataset(datasets.DatasetFolder):
         self.exclude = ['Telegram', 'Twitter', 'Whatsapp', "NotShared"]
         self.samples = []
         
-        for root_1, dirs_1, files_1 in os.walk(opt.input.path, topdown=True):
+        if phase in ["train", "val"]:
+            if opt.input.pre_post == "pre":
+                dataset_path = os.path.join(opt.input.path, "Train/TrueFace_PreSocial")
+            elif opt.input.pre_post == "post":
+                dataset_path = os.path.join(opt.input.path, "Train/TrueFace_PostSocial")
+        elif phase == "test":
+            if opt.input.pre_post == "pre":
+                dataset_path = os.path.join(opt.input.path, "Test/TrueFace_PreSocial")
+            elif opt.input.pre_post == "post":
+                dataset_path = os.path.join(opt.input.path, "Test/TrueFace_PostSocial")
+
+
+        for root_1, dirs_1, files_1 in os.walk(dataset_path, topdown=True):
             for entry in sorted(dirs_1):
                 data_folder = os.path.join(root_1, entry)
                 if entry == 'FFHQ' or entry == 'Real' or entry == '0_Real':
