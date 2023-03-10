@@ -5,9 +5,7 @@ from torchvision import datasets, transforms
 from PIL import Image
 import numpy as np
 
-from src import utils
-
-class LoaderDataset(datasets.DatasetFolder):
+class FF_TrueFace(datasets.DatasetFolder):
     def __init__(self, opt, num_classes=2):
         self.opt = opt
         self.num_classes = num_classes

@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, random_split
 from hydra.utils import get_original_cwd
 from omegaconf import OmegaConf
 
-from src import ff_mnist, ff_model, loader, ff_vit_model
+from src import ff_mnist, ff_model, ff_trueface, ff_vit_model
 
 
 def parse_args(opt):
@@ -22,8 +22,10 @@ def parse_args(opt):
 
 
 def get_model_and_optimizer(opt):
-    # model = ff_model.FF_model(opt)
-    model = ff_vit_model.FF_ViT_model(opt)
+    if opt.model.type == "MLP":
+        model = ff_model.FF_model(opt)
+    elif opt.model.type == "ViT":
+        model = ff_vit_model.FF_ViT_model(opt)
     if "cuda" in opt.device:
         model = model.to(device=opt.device)
     print(model, "\n")
@@ -55,10 +57,13 @@ def get_model_and_optimizer(opt):
 
 
 def get_data(opt, partition):
-    # dataset = loader.LoaderDataset(opt)
-    # dset = get_DATASET_partition(dataset, partition)
-    
-    dset = ff_mnist.FF_MNIST(opt, partition)
+
+    if opt.input.dataset == "TrueFace":
+        dataset = ff_trueface.LoaderDataset(opt)
+        dset = get_TrueFace_partition(dataset, partition)
+
+    elif opt.input.dataset == "MNIST":
+        dset = ff_mnist.FF_MNIST(opt, partition)
 
     # Improve reproducibility in dataloader.
     g = torch.Generator()
@@ -82,7 +87,7 @@ def seed_worker(worker_id):
     random.seed(worker_seed)
 
 
-def get_DATASET_partition(dataset, partition):
+def get_TrueFace_partition(dataset, partition):
     trainval_length = int(len(dataset)*0.8)
     trainval_set, test_set = random_split(dataset, [trainval_length, len(dataset) - trainval_length])
     train_length = int(len(trainval_set)*0.9)

@@ -74,6 +74,8 @@ class TransformerBlock(nn.Module):
         self.fc = nn.ModuleList([
                 PreNorm(dim, Attention(dim, heads = heads, dim_head = dim_head, dropout = dropout)),
                 PreNorm(dim, FeedForward(dim, mlp_dim, dropout = dropout))
+                # Attention(dim, heads = heads, dim_head = dim_head, dropout = dropout),
+                # FeedForward(dim, mlp_dim, dropout = dropout)
             ])
 
     def forward(self, x):        
@@ -92,17 +94,16 @@ class FF_ViT_model(torch.nn.Module):
         super(FF_ViT_model, self).__init__()
 
         self.opt = opt
-        self.num_channels = [self.opt.model.hidden_dim] * self.opt.model.num_layers
+        self.num_channels = [self.opt.transformer.dim] * self.opt.model.num_layers
         self.act_fn = ReLU_full_grad()
 
         # # Initialize the model.
         image_height, image_width = pair(opt.input.image_size)
         patch_height, patch_width = pair(opt.transformer.patch_size)
 
-        dim = opt.transformer.hidden_dim
-        dims = [opt.transformer.hidden_dim] * opt.model.num_layers
+        dims = [opt.transformer.dim] * opt.model.num_layers
         heads = [opt.transformer.heads] * opt.model.num_layers
-        mlp_dim = [opt.transformer.mlp_dim] * opt.model.num_layers
+        mlp_dim = [opt.model.hidden_dim] * opt.model.num_layers
         dim_head = [opt.transformer.dim_head] * opt.model.num_layers
         channels = opt.input.image_channels
 
@@ -113,12 +114,12 @@ class FF_ViT_model(torch.nn.Module):
 
         self.to_patch_embedding = nn.Sequential(
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = patch_height, p2 = patch_width),
-            nn.LayerNorm(patch_dim),
-            nn.Linear(patch_dim, dim - opt.input.num_classes),
-            nn.LayerNorm(dim - opt.input.num_classes),
+            # nn.LayerNorm(patch_dim),
+            nn.Linear(patch_dim, dims[0] - opt.input.num_classes),
+            # nn.LayerNorm(dims[0] - opt.input.num_classes),
         )
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, self.num_patches, dim))
+        self.pos_embedding = nn.Parameter(torch.randn(1, self.num_patches, dims[0]))
         self.dropout = nn.Dropout(emb_dropout)
 
         self.model = nn.ModuleList([TransformerBlock(dims[0], heads[0], dim_head[0], mlp_dim[0])])
@@ -130,13 +131,13 @@ class FF_ViT_model(torch.nn.Module):
 
         # Initialize peer normalization loss.
         self.running_means = [
-            torch.zeros(self.num_channels[i], device=self.opt.device) + 0.5
+            torch.zeros(self.num_channels[i] * self.num_patches, device=self.opt.device) + 0.5
             for i in range(self.opt.model.num_layers)
         ]
 
         # Initialize downstream classification loss.
         channels_for_classification_loss = sum(
-            self.num_channels[-i] for i in range(self.opt.model.num_layers - 1)
+            self.num_channels[-i] * self.num_patches for i in range(self.opt.model.num_layers - 1)
         )
         self.linear_classifier = nn.Sequential(
             nn.Linear(channels_for_classification_loss, self.opt.input.num_classes, bias=False)
@@ -144,7 +145,7 @@ class FF_ViT_model(torch.nn.Module):
         self.classification_loss = nn.CrossEntropyLoss()
 
         # Initialize weights.
-        self._init_weights()
+        # self._init_weights()
 
     def _init_weights(self):
         for m in self.model.modules():
@@ -152,8 +153,8 @@ class FF_ViT_model(torch.nn.Module):
                 torch.nn.init.normal_(
                     m.weight, mean=0, std=1 / math.sqrt(m.weight.shape[0])
                 )
-                # if m.bias is not None:
-                #     torch.nn.init.zeros_(m.bias)
+                if m.bias is not None:
+                    torch.nn.init.zeros_(m.bias)
 
         for m in self.linear_classifier.modules():
             if isinstance(m, nn.Linear):
@@ -196,6 +197,7 @@ class FF_ViT_model(torch.nn.Module):
 
         # Concatenate positive and negative samples and create corresponding labels.
         z = torch.cat([inputs["pos_images"], inputs["neg_images"]], dim=0)
+        
         posneg_labels = torch.zeros(z.shape[0], device=self.opt.device)
         posneg_labels[: self.opt.input.batch_size] = 1
 
@@ -206,17 +208,20 @@ class FF_ViT_model(torch.nn.Module):
         y = torch.unsqueeze(y, 1)
         y = repeat(y, 'b () d -> b p d', p=self.num_patches)
         x = rearrange(x, 'b (c h w) -> b c h w', c=self.opt.input.image_channels, h=self.opt.input.image_size, w=self.opt.input.image_size)
+        
         x = self.to_patch_embedding(x)
+
         z = torch.concatenate([x, y], -1)
 
         z += self.pos_embedding
         z = self.dropout(z)
-        
+
         z = self._layer_norm(z)
 
         for idx, layer in enumerate(self.model):
-
+            
             z = layer(z)
+
             z = rearrange(z, 'b p d -> b (p d)')
             z = self.act_fn.apply(z)
 
@@ -224,15 +229,25 @@ class FF_ViT_model(torch.nn.Module):
                 peer_loss = self._calc_peer_normalization_loss(idx, z)
                 scalar_outputs["Peer Normalization"] += peer_loss
                 scalar_outputs["Loss"] += self.opt.model.peer_normalization * peer_loss
+                if torch.isnan(peer_loss):
+                    print("WARNING")
 
             ff_loss, ff_accuracy = self._calc_ff_loss(z, posneg_labels)
             scalar_outputs[f"loss_layer_{idx}"] = ff_loss
             scalar_outputs[f"ff_accuracy_layer_{idx}"] = ff_accuracy
             scalar_outputs["Loss"] += ff_loss
+            if torch.isnan(ff_loss):
+                print("WARNING")
             z = z.detach()
 
-            z = self._layer_norm(z)
+            if torch.sum(torch.isnan(z)):
+                print("WARNING")
+
+            if torch.sum(torch.isnan(z)):
+                print("WARNING")
             z = rearrange(z, 'b (p d) -> b p d', p=self.num_patches)
+
+            z = self._layer_norm(z)
 
         scalar_outputs = self.forward_downstream_classification_model(
             inputs, labels, scalar_outputs=scalar_outputs
