@@ -81,7 +81,7 @@ def validate_or_test(opt, model, partition, epoch=None):
     model.train()
 
 
-@hydra.main(config_path=".", config_name="config_mnist_vit", version_base=None)
+@hydra.main(config_path=".", config_name="config_face", version_base=None)
 def my_main(opt: DictConfig) -> None:
     opt = utils.parse_args(opt)
     if opt.wandb.enabled:
