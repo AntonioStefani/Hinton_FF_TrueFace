@@ -1,7 +1,7 @@
 seed: 42
-device: cuda
+device: cuda:0
 wandb:
-  enabled: true
+  enabled: false
   project: FF-TrueFace
   group: Face-ViT
 input:

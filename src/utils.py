@@ -36,6 +36,7 @@ def get_model_and_optimizer(opt):
         p
         for p in model.parameters()
         if all(p is not x for x in model.linear_classifier.parameters())
+        if all(p is not x for x in model.linear_classifier.parameters())
     ]
     optimizer = torch.optim.SGD(
         [
@@ -46,6 +47,7 @@ def get_model_and_optimizer(opt):
                 "momentum": opt.training.momentum,
             },
             {
+                "params": model.linear_classifier.parameters(),
                 "params": model.linear_classifier.parameters(),
                 "lr": opt.training.downstream_learning_rate,
                 "weight_decay": opt.training.downstream_weight_decay,
@@ -96,7 +98,12 @@ def get_TrueFace_partition(dataset, partition):
             dset = train_set
         elif partition == "val":
             dset = validation_set
+        if partition == "train":
+            dset = train_set
+        elif partition == "val":
+            dset = validation_set
     elif partition == "test":
+        dset = dataset
         dset = dataset
     else:
         raise NotImplementedError

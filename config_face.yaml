@@ -2,26 +2,28 @@ seed: 42
 device: "cuda:0"  # cpu or cuda
 
 wandb:
-  enabled: True
+  enabled: False
   project: "FF-TrueFace"
   group: "Face"
 
 input:
   dataset: "TrueFace"
-  path: /media/mmlab/Volume/truebees/TrueFace/TrueFace_PostSocial/
+  path: /media/mmlab/Volume/truebees/TrueFace/
+  pre_post: "pre"  # Select dataset: "pre" for PreSocial (1024x1024), "post" for PostSocial (FB: 720x720, TL, TW: 1024x1024)
   batch_size: 128
-  image_size: 480
+  image_size: 1024
   image_channels: 3
   num_classes: 2
 
 transformer:
-  hidden_dim: 32  # Transformer hidden layer dimension
-  patch_size: 180
-  heads: 8
-  dim_head: 32
-  mlp_dim: 100  # Transformer initial layer dimension
+  dim: 256
+  patch_size: 256
+  heads: 12
+  dim_head: 64
 
 model:
+  type: "ViT"
+
   peer_normalization: 0.03
   momentum: 0.9  # Momentum to use for the running mean in peer normalization loss.
 
