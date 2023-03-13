@@ -15,10 +15,10 @@ input:
   num_classes: 10
 
 transformer:
-  dim: 256
+  dim: 1002
   patch_size: 14
   heads: 3
-  dim_head: 64
+  dim_head: 334
 
 model:
   type: "ViT"
@@ -26,7 +26,7 @@ model:
   peer_normalization: 0.03
   momentum: 0.9  # Momentum to use for the running mean in peer normalization loss.
 
-  hidden_dim: 768
+  hidden_dim: 1002
   num_layers: 3
 
 
@@ -37,7 +37,7 @@ training:
   weight_decay: 3e-4
   momentum: 0.9
 
-  downstream_learning_rate: 1e-2
+  downstream_learning_rate: 1e-3
   downstream_weight_decay: 3e-3
 
   val_idx: 10  # -1: validate only once training has finished; n: validate every n epochs.

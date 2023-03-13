@@ -6,19 +6,30 @@ from PIL import Image
 import numpy as np
 
 class FF_TrueFace(datasets.DatasetFolder):
-    def __init__(self, opt, num_classes=2):
+    def __init__(self, opt, phase="test",num_classes=2):
         self.opt = opt
         self.num_classes = num_classes
         self.uniform_label = torch.ones(self.num_classes) / self.num_classes
         self.transform = transforms.Compose([
                             transforms.ToTensor(),
                             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-                            transforms.Resize([opt.input.image_size, opt.input.image_size])
+                            transforms.Resize([opt.input.image_size, opt.input.image_size], antialias=True)
                         ])
-        self.exclude = ['Telegram', 'Twitter', 'Whatsapp', "NotShared"]
+        self.exclude = ['Whatsapp', "StyleGAN3"] # Whatsapp+StyleGAN3 for TrueFaceExtended
         self.samples = []
+
+        if phase in ["train", "val"]:
+            if opt.input.pre_post == "pre":
+                dataset_path = os.path.join(opt.input.path, "Train/TrueFace_PreSocial")
+            elif opt.input.pre_post == "post":
+                dataset_path = os.path.join(opt.input.path, "Train/TrueFace_PostSocial")
+        elif phase == "test":
+            if opt.input.pre_post == "pre":
+                dataset_path = os.path.join(opt.input.path, "Test/TrueFace_PreSocial")
+            elif opt.input.pre_post == "post":
+                dataset_path = os.path.join(opt.input.path, "Test/TrueFace_PostSocial")
         
-        for root_1, dirs_1, files_1 in os.walk(opt.input.path, topdown=True):
+        for root_1, dirs_1, files_1 in os.walk(dataset_path, topdown=True):
             for entry in sorted(dirs_1):
                 data_folder = os.path.join(root_1, entry)
                 if entry == 'FFHQ' or entry == 'Real' or entry == '0_Real':

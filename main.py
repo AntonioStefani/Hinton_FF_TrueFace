@@ -40,7 +40,11 @@ def train(opt, model, optimizer):
                     wandb.log({"train/loss": train_results["Loss"]},step=epoch)
                     wandb.log({"train/classification_loss": train_results["classification_loss"]},step=epoch)
                     wandb.log({"train/classification_accuracy": train_results["classification_accuracy"]},step=epoch)
+                    for l in range(opt.model.num_layers):
+                        wandb.log({f"train/loss_layer_{l}": train_results[f"loss_layer_{l}"]},step=epoch)
                 tepoch.set_postfix(loss=train_results["Loss"], closs=train_results["classification_loss"], acc=train_results["classification_accuracy"])
+
+                torch.save(model.state_dict(), f"checkpoint/weights_+{opt.input.pre_post}.pth")
 
         utils.print_results("train", time.time() - start_time, train_results, epoch)
         start_time = time.time()
@@ -81,7 +85,7 @@ def validate_or_test(opt, model, partition, epoch=None):
     model.train()
 
 
-@hydra.main(config_path=".", config_name="config_mnist_vit", version_base=None)
+@hydra.main(config_path=".", config_name="config_face_vit", version_base=None)
 def my_main(opt: DictConfig) -> None:
     opt = utils.parse_args(opt)
     if opt.wandb.enabled:

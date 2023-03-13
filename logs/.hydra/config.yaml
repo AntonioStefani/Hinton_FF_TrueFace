@@ -3,26 +3,32 @@ device: cuda
 wandb:
   enabled: true
   project: FF-TrueFace
-  group: MNIST-MLP
+  group: Face-ViT
 input:
-  dataset: MNIST
-  path: /media/mmlab/Volume/truebees/MNIST
-  batch_size: 100
-  image_size: 28
-  image_channels: 1
-  num_classes: 10
+  dataset: TrueFace
+  path: /media/mmlab/Volume/truebees/TrueFace/
+  pre_post: pre
+  batch_size: 128
+  image_size: 1024
+  image_channels: 3
+  num_classes: 2
+transformer:
+  dim: 1024
+  patch_size: 256
+  heads: 16
+  dim_head: 64
 model:
-  type: MLP
+  type: ViT
   peer_normalization: 0.03
   momentum: 0.9
-  hidden_dim: 1000
+  hidden_dim: 1024
   num_layers: 3
 training:
-  epochs: 100
-  learning_rate: 0.001
+  epochs: 200
+  learning_rate: 1.0e-05
   weight_decay: 0.0003
   momentum: 0.9
   downstream_learning_rate: 0.01
   downstream_weight_decay: 0.003
-  val_idx: 10
-  final_test: false
+  val_idx: 20
+  final_test: true

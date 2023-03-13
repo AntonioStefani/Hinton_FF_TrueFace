@@ -131,13 +131,13 @@ class FF_ViT_model(torch.nn.Module):
 
         # Initialize peer normalization loss.
         self.running_means = [
-            torch.zeros(self.num_channels[i] * self.num_patches, device=self.opt.device) + 0.5
+            torch.zeros(self.num_channels[i], device=self.opt.device) + 0.5
             for i in range(self.opt.model.num_layers)
         ]
 
         # Initialize downstream classification loss.
         channels_for_classification_loss = sum(
-            self.num_channels[-i] * self.num_patches for i in range(self.opt.model.num_layers - 1)
+            self.num_channels[-i] for i in range(self.opt.model.num_layers - 1)
         )
         self.linear_classifier = nn.Sequential(
             nn.Linear(channels_for_classification_loss, self.opt.input.num_classes, bias=False)
@@ -216,30 +216,30 @@ class FF_ViT_model(torch.nn.Module):
         z += self.pos_embedding
         z = self.dropout(z)
 
-        # z = self._layer_norm(z)
+        z = self._layer_norm(z)
 
         for idx, layer in enumerate(self.model):
             
             z = layer(z)
             z = self.act_fn.apply(z)
 
-            z = rearrange(z, 'b p d -> b (p d)')
+            # z = rearrange(z, 'b p d -> b (p d)')
 
             if self.opt.model.peer_normalization > 0:
-                peer_loss = self._calc_peer_normalization_loss(idx, z)
+                peer_loss = self._calc_peer_normalization_loss(idx, torch.mean(z, dim=1))
                 scalar_outputs["Peer Normalization"] += peer_loss
                 scalar_outputs["Loss"] += self.opt.model.peer_normalization * peer_loss
 
-            ff_loss, ff_accuracy = self._calc_ff_loss(z, posneg_labels)
+            ff_loss, ff_accuracy = self._calc_ff_loss(torch.mean(z, dim=1), posneg_labels)
             scalar_outputs[f"loss_layer_{idx}"] = ff_loss
             scalar_outputs[f"ff_accuracy_layer_{idx}"] = ff_accuracy
             scalar_outputs["Loss"] += ff_loss
             
-            z = rearrange(z, 'b (p d) -> b p d', p=self.num_patches)
+            # z = rearrange(z, 'b (p d) -> b p d', p=self.num_patches)
             
             z = z.detach()
 
-            # z = self._layer_norm(z)
+            z = self._layer_norm(z)
 
         scalar_outputs = self.forward_downstream_classification_model(
             inputs, labels, scalar_outputs=scalar_outputs
@@ -257,7 +257,7 @@ class FF_ViT_model(torch.nn.Module):
 
         z = inputs["neutral_sample"]
         z = z.reshape(z.shape[0], -1)
-        # z = self._layer_norm(z)
+        z = self._layer_norm(z)
 
         input_classification_model = []
 
@@ -276,13 +276,13 @@ class FF_ViT_model(torch.nn.Module):
             for idx, layer in enumerate(self.model):
                 z = layer(z)
                 z = self.act_fn.apply(z)
-                z = rearrange(z, 'b p d -> b (p d)')
+                # z = rearrange(z, 'b p d -> b (p d)')
 
                 if idx >= 1:
-                    input_classification_model.append(z)
+                    input_classification_model.append(torch.mean(z, dim=1))
                     
-                z = rearrange(z, 'b (p d) -> b p d', p=self.num_patches)
-                # z = self._layer_norm(z)
+                # z = rearrange(z, 'b (p d) -> b p d', p=self.num_patches)
+                z = self._layer_norm(z)
 
         input_classification_model = torch.concat(input_classification_model, dim=-1)
 
