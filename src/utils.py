@@ -61,7 +61,7 @@ def get_model_and_optimizer(opt):
 def get_data(opt, partition):
 
     if opt.input.dataset == "TrueFace":
-        dataset = ff_trueface.FF_TrueFace(opt)
+        dataset = ff_trueface.FF_TrueFace(opt, partition)
         dset = get_TrueFace_partition(dataset, partition)
 
     elif opt.input.dataset == "MNIST":

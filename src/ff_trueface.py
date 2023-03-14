@@ -15,7 +15,10 @@ class FF_TrueFace(datasets.DatasetFolder):
                             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
                             transforms.Resize([opt.input.image_size, opt.input.image_size], antialias=True)
                         ])
-        self.exclude = ['Whatsapp', "StyleGAN3"] # Whatsapp+StyleGAN3 for TrueFaceExtended
+        # Whatsapp+StyleGAN3 for TrueFaceExtended;
+        # Other folders contains real images, they're only needed to bilance the stylegan3 fake images
+        # self.exclude = ['Whatsapp', "StyleGAN3", "09000", "10000", "11000", "12000", "13000"]
+        # self.exclude = ['Whatsapp', "StyleGAN3"]
         self.samples = []
 
         if phase in ["train", "val"]:
@@ -28,6 +31,11 @@ class FF_TrueFace(datasets.DatasetFolder):
                 dataset_path = os.path.join(opt.input.path, "Test/TrueFace_PreSocial")
             elif opt.input.pre_post == "post":
                 dataset_path = os.path.join(opt.input.path, "Test/TrueFace_PostSocial")
+
+        if opt.input.pre_post == "pre":
+            self.exclude = []
+        elif opt.input.pre_post == "post":
+            self.exclude = ['Whatsapp', "StyleGAN3", "09000", "10000", "11000", "12000", "13000"]
         
         for root_1, dirs_1, files_1 in os.walk(dataset_path, topdown=True):
             for entry in sorted(dirs_1):
@@ -46,6 +54,8 @@ class FF_TrueFace(datasets.DatasetFolder):
                                 if (file.endswith(".png") or file.endswith(".jpg") or file.endswith(".jpeg")):
                                     item = os.path.join(root, file), torch.tensor(1)
                                     self.samples.append(item)
+
+        print("Loaded " + str(len(self.samples)) + " images")
 
 
     def __getitem__(self, index):
