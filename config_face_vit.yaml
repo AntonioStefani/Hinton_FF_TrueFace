@@ -8,7 +8,7 @@ wandb:
 
 input:
   dataset: "TrueFace"
-  path: /media/mmlab/Volume/truebees/TrueFace/  
+  path: /media/mmlab/Datasets_4TB/truebees/truebees/TrueFace/  
   pre_post: "pre"  # "pre" or "post"
   batch_size: 128
   image_size: 1024
@@ -16,9 +16,9 @@ input:
   num_classes: 2
 
 transformer:
-  dim: 1024  # Transformer hidden layer dimension
+  dim: 192  # Transformer hidden layer dimension
   patch_size: 256
-  heads: 16
+  heads: 3
   dim_head: 64
 
 model:
@@ -27,18 +27,18 @@ model:
   peer_normalization: 0.03
   momentum: 0.9  # Momentum to use for the running mean in peer normalization loss.
 
-  hidden_dim: 1024  # Classification layer dimension
+  hidden_dim: 768  # Classification layer dimension
   num_layers: 3
 
 
 training:
-  epochs: 200
+  epochs: 100
 
-  learning_rate: 1e-5
+  learning_rate: 1e-4
   weight_decay: 3e-4
   momentum: 0.9
 
-  downstream_learning_rate: 1e-2
+  downstream_learning_rate: 1e-3
   downstream_weight_decay: 3e-3
 
   val_idx: 20  # -1: validate only once training has finished; n: validate every n epochs.

@@ -163,6 +163,13 @@ def get_linear_cooldown_lr(opt, epoch, lr):
         return lr
 
 
+def get_linear_cooldown_lr_warmup(opt, epoch, lr):
+    if epoch > (opt.training.epochs // 2):
+        return lr * (opt.training.epochs/(opt.training.epochs - opt.training.warmup)) * (1 + opt.training.epochs - epoch) / opt.training.epochs
+    else:
+        return lr
+
+
 def update_learning_rate(optimizer, opt, epoch):
     optimizer.param_groups[0]["lr"] = get_linear_cooldown_lr(
         opt, epoch, opt.training.learning_rate
