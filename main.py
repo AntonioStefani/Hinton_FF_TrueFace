@@ -9,6 +9,7 @@ import torch
 from omegaconf import DictConfig
 
 from src import utils
+import os
 
 
 def train(opt, model, optimizer):
@@ -19,6 +20,7 @@ def train(opt, model, optimizer):
     for epoch in range(opt.training.epochs):
         train_results = defaultdict(float)
         optimizer = utils.update_learning_rate(optimizer, opt, epoch)
+        scaler = torch.cuda.amp.GradScaler(enabled=True)
         
         with tqdm(train_loader, unit="batch") as tepoch:
             tepoch.set_description(f"Epoch {epoch}")
@@ -27,10 +29,15 @@ def train(opt, model, optimizer):
 
                 optimizer.zero_grad()
 
-                scalar_outputs = model(inputs, labels)
-                scalar_outputs["Loss"].backward()
+                with torch.autocast(device_type='cuda', dtype=torch.bfloat16):
+                    scalar_outputs = model(inputs, labels)
+                    # scalar_outputs["Loss"].backward()
 
-                optimizer.step()
+                scaler.scale(scalar_outputs["Loss"]).backward()
+                scaler.step(optimizer)
+                scaler.update()
+
+                # optimizer.step()
 
                 train_results = utils.log_results(
                     train_results, scalar_outputs, num_steps_per_epoch            
@@ -44,7 +51,9 @@ def train(opt, model, optimizer):
                         wandb.log({f"train/loss_layer_{l}": train_results[f"loss_layer_{l}"]},step=epoch)
                 tepoch.set_postfix(loss=train_results["Loss"], closs=train_results["classification_loss"], acc=train_results["classification_accuracy"])
 
-                torch.save(model.state_dict(), f"checkpoint/weights_+{opt.input.pre_post}.pth")
+            if not os.path.exists(f"checkpoint/{wandb.run.id}"):
+                os.makedirs(f"checkpoint/{wandb.run.id}")
+            torch.save(model.state_dict(), f"checkpoint/{wandb.run.id}/weights_{opt.input.pre_post}.pth")
 
         utils.print_results("train", time.time() - start_time, train_results, epoch)
         start_time = time.time()
@@ -88,6 +97,9 @@ def validate_or_test(opt, model, partition, epoch=None):
 @hydra.main(config_path=".", config_name="config_face_vit", version_base=None)
 def my_main(opt: DictConfig) -> None:
     opt = utils.parse_args(opt)
+    os.environ["TORCH_CUDNN_V8_API_ENABLED"] = "1"
+    torch.backends.cuda.matmul.allow_tf32 = False
+    torch.backends.cudnn.benchmark = True
     if opt.wandb.enabled:
         wandb.init(config=opt, project=opt.wandb.project, group=opt.wandb.group)
     model, optimizer = utils.get_model_and_optimizer(opt)
